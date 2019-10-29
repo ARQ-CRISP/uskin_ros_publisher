@@ -1,0 +1,3 @@
+[submodule "include/uskin_ros_publisher/uskin_can_drivers"]
+	path = include/uskin_ros_publisher/uskin_can_drivers
+	url = https://github.com/ARQ-CRISP/uskin_can_drivers.git
