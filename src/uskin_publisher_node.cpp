@@ -1,37 +1,58 @@
 #include "ros/ros.h"
 #include "uskin_ros_publisher/uskinFrame.h"
-#include "uskin_can_drivers/uskinCanDriver.h"
-
+#include "uskin_can_drivers/include/uskinCanDriver.h"
 
 /**
  * This tutorial demonstrates simple sending of messages over the ROS system.
  */
 int main(int argc, char **argv)
 {
-  /**
-   * The ros::init() function needs to see argc and argv so that it can perform
-   * any ROS arguments and name remapping that were provided at the command line.
-   * For programmatic remappings you can use a different version of init() which takes
-   * remappings directly, but for most command-line programs, passing argc and argv is
-   * the easiest way to do it.  The third argument to init() is the name of the node.
-   *
-   * You must call one of the versions of ros::init() before using any other
-   * part of the ROS system.
-   */
+
+  UskinSensor *uskin = new UskinSensor; // Will connect to "can0" device by default
+  time_t timer;
+  struct tm *timeinfo;
+  char csv_name[20];
+  int count = 0;
+  int number_of_nodes;
+
   ros::init(argc, argv, "uskin_publisher_node");
 
-  /**
-   * NodeHandle is the main access point to communications with the ROS system.
-   * The first NodeHandle constructed will fully initialize this node, and the last
-   * NodeHandle destructed will close down the node.
-   */
   ros::NodeHandle n;
 
-  ros::Publisher uskin_xyz_publisher = n.advertise<uskin_ros_publisher::uskinFrame>("uskin_x_values", 1000);
+  ros::Publisher uskin_xyz_publisher = n.advertise<uskin_ros_publisher::uskinFrame>("/uskin_xyz_values", 1000);
 
   ros::Rate loop_rate(1);
 
-  int count = 0;
+  // Used if we wish to filter incoming messages
+  /*  struct can_filter rfilter[1];
+
+  rfilter[0].can_id = 0x135;
+  rfilter[0].can_mask = CAN_SFF_MASK; */
+  //rfilter[1].can_id   = 0x101;
+  //rfilter[1].can_mask = CAN_SFF_MASK;
+  time(&timer);
+  timeinfo = localtime(&timer);
+  strftime(csv_name, 20, "%F_%T", timeinfo);
+
+
+  ROS_INFO("Let's start the sensor");
+
+  if (!uskin->StartSensor())
+  {
+    ROS_ERROR("Problems initiating the sensor!");
+    delete uskin;
+
+    return (-1);
+  }
+
+  uskin->CalibrateSensor(); // Calibrates sensor and data is stored normalized
+
+  uskin->SaveData("uskin_data_" + std::string(csv_name) + ".csv"); //Only called once, will save output to a csv file
+
+  ROS_INFO("Let's retrieve some data");
+
+  //ros::Duration(2).sleep();
+  //delete uskin;
   while (ros::ok() && !ros::isShuttingDown())
   {
 
@@ -42,27 +63,41 @@ int main(int argc, char **argv)
     uskin_ros_publisher::uskinFrame uskin_frame_reading_msg;
     geometry_msgs::PointStamped uskin_node_reading_msg;
 
-    
-    node.header.frame_id = "100";
-    node.point.x = 10;
-    node.point.y = 20;
-    node.point.z = 1000;
+    /* if (count == 0)
+    { */
+    uskin->RetrieveFrameData(); // Get data. If SavaData was called, data is stored in file
 
-    frame_x.header.seq = count;
-    frame_x.header.stamp = ros::Time::now();
-    frame_x.header.frame_id = "1";
-    frame_x.frame.push_back(node);
-    
-    //ROS_INFO("%s", msg.data.c_str());
+    //ROS_ERROR("New uskin Frame data sucessfuly retrieved\n");
+    number_of_nodes = uskin->GetUskinFrameSize();
+    for (int i = 0; i < number_of_nodes; i++)
+    {
+      _uskin_node_time_unit_reading *current_node_reading;
 
-    frame_x_values_publisher.publish(frame_x);
+      current_node_reading = uskin->GetNodeData_xyzValues(i);
+
+      ROS_INFO("%s", current_node_reading->to_str().c_str());
+
+      std::stringstream node_id_str;
+      node_id_str << std::hex << current_node_reading->node_id;
+
+      uskin_node_reading_msg.header.frame_id = node_id_str.str();
+      uskin_node_reading_msg.point.x = current_node_reading->x_value;
+      uskin_node_reading_msg.point.y = current_node_reading->y_value;
+      uskin_node_reading_msg.point.z = current_node_reading->z_value;
+
+      uskin_frame_reading_msg.header.seq = count;
+      uskin_frame_reading_msg.header.stamp = ros::Time::now();
+      uskin_frame_reading_msg.frame.push_back(uskin_node_reading_msg);
+    }
+    uskin_xyz_publisher.publish(uskin_frame_reading_msg);
+    // }
 
     ros::spinOnce();
 
-    loop_rate.sleep();
-    ++count;
+    count++;
   }
 
+  uskin->StopSensor();
 
   return 0;
 }

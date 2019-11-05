@@ -1,2 +1,6 @@
 #visual code files
 .vscode
+
+#log files
+csv_files
+log_files

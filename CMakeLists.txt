@@ -135,7 +135,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/uskin_publisher_node.cpp)
+
+add_executable(${PROJECT_NAME}_node src/uskin_publisher_node.cpp include/uskin_can_drivers/src/uskinCanDriver.cpp include/uskin_can_drivers/src/can_communication.cpp)
 target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES})
 
 ## Declare a cpp executable
@@ -186,8 +187,8 @@ target_link_libraries(
 # )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+# install(DIRECTORY include/uskin_can_drivers/include/
+#   DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
 #   FILES_MATCHING PATTERN "*.h"
 #   PATTERN ".svn" EXCLUDE
 # )
