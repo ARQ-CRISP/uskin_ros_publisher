@@ -2,9 +2,6 @@
 #include "uskin_ros_publisher/uskinFrame.h"
 #include "uskin_can_drivers/include/uskinCanDriver.h"
 
-/**
- * This tutorial demonstrates simple sending of messages over the ROS system.
- */
 int main(int argc, char **argv)
 {
 
@@ -30,6 +27,7 @@ int main(int argc, char **argv)
   rfilter[0].can_mask = CAN_SFF_MASK; */
   //rfilter[1].can_id   = 0x101;
   //rfilter[1].can_mask = CAN_SFF_MASK;
+
   time(&timer);
   timeinfo = localtime(&timer);
   strftime(csv_name, 20, "%F_%T", timeinfo);
@@ -51,8 +49,6 @@ int main(int argc, char **argv)
 
   ROS_INFO("Let's retrieve some data");
 
-  //ros::Duration(2).sleep();
-  //delete uskin;
   while (ros::ok() && !ros::isShuttingDown())
   {
 
@@ -98,6 +94,7 @@ int main(int argc, char **argv)
   }
 
   uskin->StopSensor();
+  delete uskin;
 
   return 0;
 }
