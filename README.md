@@ -3,7 +3,7 @@ ROS package for publishing data being retrieved by uSkin sensor. (https://www.xe
 Real-time data visualization is also supported on RViz using the Grid Map ROS package. (https://github.com/ANYbotics/grid_map)
 
 ## Dependencies
-This repository is dependent on ARQ-CRISP/ros_can_drivers files and is included here as a gitsubmodule. After cloning this repo, run:  
+This repository is dependent on ARQ-CRISP/ros_can_drivers files and they are included here as a gitsubmodule. After cloning this repo, run:  
 `git submodule init`
 
 And to get lastest updates on ros_can_drivers simply run:  
@@ -24,8 +24,7 @@ And to get lastest updates on ros_can_drivers simply run:
 `git push`  
 or simply:  
 `git push --recurse-submodules=on-demand` # From main repository
-
-- **You must still commit your changes on the submodule.**
+  **You must still commit your changes on the submodule beforehand.**
  
 ## Real-Time Data Visualization
 
