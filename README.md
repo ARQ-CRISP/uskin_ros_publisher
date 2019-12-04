@@ -23,7 +23,7 @@ And to get lastest updates on ros_can_drivers simply run:
 `git commit`  
 `git push`  
 or simply:  
-`git push --recurse-submodules=on-demand` # From main repository
+`git push --recurse-submodules=on-demand` # From main repository  
   **You must still commit your changes on the submodule beforehand.**
  
 ## Real-Time Data Visualization
