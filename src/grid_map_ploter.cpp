@@ -24,14 +24,30 @@ ros::Publisher publisher;
 
 void ploterCallback(const uskin_ros_publisher::uskinFrame &msg)
 {
-  // Create grid map.
-  map.at("elevation", *it) = -1 * msg.frame[(index(1)) * 4 + (index(0))].point.z;
-  map.at("normal_x", *it) = msg.frame[(index(1)) * 4 + (index(0))].point.y * 10 / vector_lenght;
-  map.at("normal_y", *it) = -1 * msg.frame[(index(1)) * 4 + (index(0))].point.x * 10 / vector_lenght;
-  map.at("normal_z", *it) = msg.frame[(index(1)) * 4 + (index(0))].point.z * 10 / vector_lenght;
 
-  ROS_INFO("Printing node %s at position x:%i, y:%i, with value %f", msg.frame[(index(1)) * 4 + (index(0))].header.frame_id.c_str(), index(0), index(1), msg.frame[(index(1)) * 4 + (index(0))].point.z);
-}
+  // Create grid map.
+  GridMap map({"elevation", "normal_x", "normal_y", "normal_z"});
+  map.setFrameId("map");
+  map.setGeometry(Length(120, 180), 30);
+
+  // Add data to grid map.
+  ros::Time time = ros::Time::now();
+  for (GridMapIterator it(map); !it.isPastEnd(); ++it)
+  {
+    Position position;
+    map.getPosition(*it, position);
+    Index index;
+    map.getIndex(position, index);
+    float vector_lenght = sqrt(pow(msg.frame[(index(1)) * 4 + (index(0))].point.x, 2) + pow(msg.frame[(index(1)) * 4 + (index(0))].point.y, 2) + pow(msg.frame[(index(1)) * 4 + (index(0))].point.z, 2));
+
+    map.at("elevation", *it) = -1 * msg.frame[(index(1)) * 4 + (index(0))].point.z;
+    map.at("normal_x", *it) = msg.frame[(index(1)) * 4 + (index(0))].point.y * 10 / vector_lenght;
+    map.at("normal_y", *it) = -1 * msg.frame[(index(1)) * 4 + (index(0))].point.x * 10 / vector_lenght;
+    map.at("normal_z", *it) = msg.frame[(index(1)) * 4 + (index(0))].point.z * 10 / vector_lenght;
+
+    ROS_INFO("Printing node %s at position x:%i, y:%i, with value %f", msg.frame[(index(1)) * 4 + (index(0))].header.frame_id.c_str(), index(0), index(1), msg.frame[(index(1)) * 4 + (index(0))].point.z);
+  }
+
 // Publish grid map.
 map.setTimestamp(time.toNSec());
 grid_map_msgs::GridMap message;

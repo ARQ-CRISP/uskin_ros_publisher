@@ -4,7 +4,7 @@
   <node pkg="uskin_ros_publisher" type="uskin_ros_publisher_node" name="uskin_publisher">
   <!-- Change the following paths to store log and CSV files, if necessary -->
     <param name="log_file_path" value="$(find uskin_ros_publisher)/log_files/uSkinCanDriver_log" />
-    <param name="csv_data_file_path" value="$(find uskin_ros_publisher)csv_files/uskin_data" />
+    <param name="csv_data_file_path" value="$(find uskin_ros_publisher)/csv_files/uskin_data" />
     <param name="csv_normalized_data_file_path" value="$(find uskin_ros_publisher)/csv_files/uskin_normalized_data" />
   </node>
   
