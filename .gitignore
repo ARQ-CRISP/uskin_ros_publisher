@@ -4,3 +4,10 @@
 #log files
 csv_files
 log_files
+rosbags
+files
+
+
+#some temporary files
+bag_time_transform.py
+uskin_ros_publisher.zip
