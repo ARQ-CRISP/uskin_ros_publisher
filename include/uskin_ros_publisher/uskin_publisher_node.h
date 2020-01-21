@@ -19,6 +19,7 @@
 #include "uskin_ros_publisher/uskinFrame.h"
 #include "uskin_can_drivers/include/uskinCanDriver.h"
 
+#define CALIBRATE_SENSOR 4
 
 void constructPointStamped(geometry_msgs::PointStamped *uskin_node_reading_msg, _uskin_node_time_unit_reading *current_node_reading);
 

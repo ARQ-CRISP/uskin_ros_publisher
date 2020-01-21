@@ -13,10 +13,44 @@
  */
 
 #include "uskin_ros_publisher/uskin_publisher_node.h"
+#include "uskin_ros_publisher/KeyboardCommand.h"
 
 std::string log_file_path;
 std::string csv_normalized_data_file_path;
 std::string csv_data_file_path;
+
+// bool process_keyboard_command(uskin_ros_publisher::KeyboardCommand::Request &req, uskin_ros_publisher::KeyboardCommand::Response &res)
+// {
+//   std::stringstream ss;
+
+//   switch (req.command)
+//   {
+//   case START_RECORD:
+
+//     ss << "OK " << req.command;
+//     res.message = ss.str();
+
+//     ROS_ERROR("sending back response: %s", res.message.c_str());
+//     break;
+//     // case END_RECORD:
+//     //   /* code */
+//     //   break;
+//     // case SLIP:
+//     //   /* code */
+//     //   break;
+//     // case NO_SLIP:
+//     //   /* code */
+//     //   break;
+//     // case CALIBRATE:
+//     //   /* code */
+//     //   break;
+
+//   default:
+//     break;
+//   }
+
+//   return true;
+// }
 
 void constructPointStamped(geometry_msgs::PointStamped *uskin_node_reading_msg, _uskin_node_time_unit_reading *current_node_reading)
 {
@@ -145,26 +179,13 @@ int main(int argc, char **argv)
 
   ros::Publisher uskin_xyz_publisher = n.advertise<uskin_ros_publisher::uskinFrame>("/uskin_xyz_values", 1000);
   ros::Publisher normalized_uskin_xyz_publisher = n.advertise<uskin_ros_publisher::uskinFrame>("/uskin_xyz_values_normalized", 1000);
+  // ros::ServiceServer service = n.advertiseService("keyboard_command", process_keyboard_command);
 
   ros::Rate loop_rate(1);
 
   UskinSensor *uskin = new UskinSensor(log_file_path); // Will connect to "can0" network  and device "0x201" by default
 
-  // Later could be used to filter incoming messages
-  /*  struct can_filter rfilter[1];
-
-  rfilter[0].can_id = 0x135;
-  rfilter[0].can_mask = CAN_SFF_MASK; */
-  //rfilter[1].can_id   = 0x101;
-  //rfilter[1].can_mask = CAN_SFF_MASK;
-
   ROS_INFO("Let's start the sensor");
-
-  // Check if there are any subscribers to uskin_xyz_publisher
-  // while (number_of_subscribers == 0)
-  // {
-  //   number_of_subscribers = uskin_xyz_publisher.getNumSubscribers();
-  // }
 
   // Starting the sensor
   if (!uskin->StartSensor())
@@ -175,11 +196,9 @@ int main(int argc, char **argv)
     return (-1);
   }
 
-
   // Calibrate the sensor
   uskin->CalibrateSensor();
 
-  // uskin->SaveData("../csv_files/uskin_data_");
   uskin->SaveData(csv_data_file_path);
   uskin->SaveNormalizedData(csv_normalized_data_file_path);
 
@@ -201,11 +220,12 @@ int main(int argc, char **argv)
     uskin_xyz_publisher.publish(uskin_frame_reading_msg);
 
     // Normalize and publish data
-    uskin->NormalizeData();
-
-    // Set message objects with normalized readings and publish it
-    constructMessage(&normalized_uskin_frame_reading_msg, uskin, count);
-    normalized_uskin_xyz_publisher.publish(normalized_uskin_frame_reading_msg);
+    if (uskin->NormalizeData())
+    {
+      // Set message objects with normalized readings and publish it
+      constructMessage(&normalized_uskin_frame_reading_msg, uskin, count);
+      normalized_uskin_xyz_publisher.publish(normalized_uskin_frame_reading_msg);
+    }
 
     ros::spinOnce();
 
