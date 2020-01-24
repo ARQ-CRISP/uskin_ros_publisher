@@ -18,13 +18,18 @@
 #include "ros/ros.h"
 #include "uskin_ros_publisher/uskinFrame.h"
 #include "uskin_can_drivers/include/uskinCanDriver.h"
+#include <thread>
 
 #define CALIBRATE_SENSOR 4
 
+void timerCallback(const ros::TimerEvent&);
+
 void constructPointStamped(geometry_msgs::PointStamped *uskin_node_reading_msg, _uskin_node_time_unit_reading *current_node_reading);
+
+void constructPointStampedNormalized(geometry_msgs::PointStamped *uskin_node_reading_msg, _uskin_node_time_unit_reading *current_node_reading);
 
 void constructUskinFrame(uskin_ros_publisher::uskinFrame *uskin_frame_reading_msg, int sequence);
 
-void constructMessage(uskin_ros_publisher::uskinFrame *uskin_frame_reading_msg, UskinSensor *uskin, int sequence);
+void constructMessage(uskin_ros_publisher::uskinFrame *uskin_frame_reading_msg, UskinSensor *uskin, int sequence, void (*contructMessage)(geometry_msgs::PointStamped *, _uskin_node_time_unit_reading *));
 
 #endif
