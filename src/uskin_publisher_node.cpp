@@ -21,15 +21,12 @@ std::string csv_data_file_path;
 bool is_publishing = false;
 bool is_first_data_received = false;
 UskinSensor *uskin;
-
+_uskin_node_time_unit_reading *instant_frame_data;
 
 void do_stuff()
 {
 
   ros::NodeHandlePtr n = boost::make_shared<ros::NodeHandle>();
-  ros::Duration diff;
-  ros::Time last = ros::Time::now();
-  ros::Time now;
 
   int count = 0; // Message sequence counter
 
@@ -37,24 +34,21 @@ void do_stuff()
   ros::Publisher normalized_uskin_xyz_publisher = n->advertise<uskin_ros_publisher::uskinFrame>("/uskin_xyz_values_normalized", 1000);
 
   // ros::Publisher pub_b = node->advertise<std_msgs::Empty>("topic_b", 10);
-  while (!is_first_data_received){}
+  while (!is_first_data_received)
+  {
+  }
   ros::Rate rate(180);
   while (ros::ok())
-  { 
+  {
     uskin_ros_publisher::uskinFrame uskin_frame_reading_msg, normalized_uskin_frame_reading_msg;
     is_publishing = true;
     // ROS_ERROR("Timer!!!!!");// Set message objects with new readings and publish it
-    constructMessage(&uskin_frame_reading_msg, uskin, count, constructPointStamped);
-    uskin_xyz_publisher.publish(uskin_frame_reading_msg);
 
     // Set message objects with normalized readings and publish it
-    constructMessage(&normalized_uskin_frame_reading_msg, uskin, count, constructPointStampedNormalized);
+    constructMessages(&uskin_frame_reading_msg, &normalized_uskin_frame_reading_msg, uskin, count, constructPointStamped, constructPointStampedNormalized);
+    uskin_xyz_publisher.publish(uskin_frame_reading_msg);
     normalized_uskin_xyz_publisher.publish(normalized_uskin_frame_reading_msg);
-    
-    now = ros::Time::now();
-    diff =  ros::Time::now() - last;
-    last = now;
-    ROS_ERROR("Time diff %f", diff.toSec());
+    ;
     // pub_b.publish(msg);
     is_publishing = false;
     count++;
@@ -129,7 +123,7 @@ void constructUskinFrame(uskin_ros_publisher::uskinFrame *uskin_frame_reading_ms
 void constructMessage(uskin_ros_publisher::uskinFrame *uskin_frame_reading_msg, UskinSensor *uskin, int sequence, void (*contructMessage)(geometry_msgs::PointStamped *, _uskin_node_time_unit_reading *))
 {
   // constructPointStamped for each node reading
-  int number_of_nodes = uskin->GetUskinFrameSize();  
+  int number_of_nodes = uskin->GetUskinFrameSize();
 
   for (int i = 0; i < number_of_nodes; i++)
   {
@@ -148,6 +142,33 @@ void constructMessage(uskin_ros_publisher::uskinFrame *uskin_frame_reading_msg, 
   }
   // constructUskinFrame for frame reading (containing all node readings)
   constructUskinFrame(uskin_frame_reading_msg, sequence);
+
+  return;
+}
+
+void constructMessages(uskin_ros_publisher::uskinFrame *uskin_frame_reading_msg, uskin_ros_publisher::uskinFrame *uskin_frame_reading_normalized_msg, UskinSensor *uskin, int sequence, void (*contructMessage)(geometry_msgs::PointStamped *, _uskin_node_time_unit_reading *), void (*contructMessage2)(geometry_msgs::PointStamped *, _uskin_node_time_unit_reading *))
+{
+  // constructPointStamped for each node reading
+  int number_of_nodes = uskin->GetUskinFrameSize();
+
+  for (int i = 0; i < number_of_nodes; i++)
+  {
+
+    geometry_msgs::PointStamped uskin_node_reading_msg;
+    geometry_msgs::PointStamped uskin_node_reading_normalized_msg;
+
+
+    contructMessage(&uskin_node_reading_msg, &instant_frame_data[i]);
+    uskin_frame_reading_msg->frame.push_back(uskin_node_reading_msg);
+
+    contructMessage2(&uskin_node_reading_normalized_msg, &instant_frame_data[i]);
+    uskin_frame_reading_normalized_msg->frame.push_back(uskin_node_reading_normalized_msg);
+
+    ROS_INFO_STREAM("Values for element: " << std::to_string(i) << " " << uskin_node_reading_msg.point.x << " " << uskin_node_reading_msg.point.y << " " << uskin_node_reading_msg.point.z);
+  }
+  // constructUskinFrame for frame reading (containing all node readings)
+  constructUskinFrame(uskin_frame_reading_msg, sequence);
+  constructUskinFrame(uskin_frame_reading_normalized_msg, sequence);
 
   return;
 }
@@ -267,18 +288,19 @@ int main(int argc, char **argv)
 
     // Message objects to be published
     // Retrieve new data
-    while(is_publishing){}
+    while (is_publishing)
+    {
+    }
     uskin->RetrieveFrameData();
-
     uskin->NormalizeData();
-    instant_reading = uskin->GetFrameData_xyzValues();
+
+    instant_frame_data = uskin->GetFrameData();
 
     is_first_data_received = true;
 
     ROS_INFO("New uskin Frame data sucessfuly retrieved\n");
 
     // ros::spinOnce();
-    
   }
 
   uskin->StopSensor();

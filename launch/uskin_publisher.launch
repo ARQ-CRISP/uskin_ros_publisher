@@ -1,6 +1,6 @@
 <launch>
 
-  <arg name="grasp_number" default="0" />
+  <arg name="grasp_number" default="1" />
   <arg name="object" default="" />
   <arg name="method" default="" />
   <arg name="save_data" default="false" />

@@ -8,18 +8,47 @@ import sys
 def on_press(key):
 
     try:
+        
+        if key == keyboard.Key.up:
+            # do something
+            global velocity
+            velocity = velocity * 2
+            rospy.loginfo("Velocity at x{}".format(velocity))
+
+            return False
+
+        if key == keyboard.Key.down:
+            # do something
+            global velocity
+            if velocity > 1:
+                velocity = velocity / 2  
+            rospy.loginfo("Velocity at x{}".format(velocity))
+
+            return False
 
         if key == keyboard.Key.right:
             # do something
-            rospy.loginfo("right key arrow was pressed")
+            rospy.loginfo(">> x{}".format(velocity))
             global current_index
-            current_index += 1
+            current_index += velocity
             return False
             
         elif key == keyboard.Key.left:
-            rospy.loginfo("left key arrow was pressed")
+            rospy.loginfo("<< x{}".format(velocity))
             global current_index
-            current_index -= 1
+            current_index -= velocity
+            return False
+
+        elif key == keyboard.Key.space:
+            rospy.loginfo(">> x50")
+            global current_index
+            current_index += 50
+            return False
+
+        elif key == keyboard.Key.backspace:
+            rospy.loginfo("<< x50")
+            global current_index
+            current_index += 50
             return False
 
     except AttributeError as ex:
@@ -45,6 +74,7 @@ if __name__ == '__main__':
         exit()
 
     current_index = 0
+    velocity = 1
 
     try:
         

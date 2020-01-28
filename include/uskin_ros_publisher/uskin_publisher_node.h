@@ -32,4 +32,6 @@ void constructUskinFrame(uskin_ros_publisher::uskinFrame *uskin_frame_reading_ms
 
 void constructMessage(uskin_ros_publisher::uskinFrame *uskin_frame_reading_msg, UskinSensor *uskin, int sequence, void (*contructMessage)(geometry_msgs::PointStamped *, _uskin_node_time_unit_reading *));
 
+void constructMessages(uskin_ros_publisher::uskinFrame *uskin_frame_reading_msg, uskin_ros_publisher::uskinFrame *uskin_frame_reading_normalized_msg, UskinSensor * uskin, int sequence, void (*contructMessage)(geometry_msgs::PointStamped *, _uskin_node_time_unit_reading *), void (*contructMessage2)(geometry_msgs::PointStamped *, _uskin_node_time_unit_reading *));
+
 #endif

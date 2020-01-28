@@ -92,29 +92,29 @@ def on_press(key):
 
                 rospy.loginfo("Moving START")            
             
-            elif record_data_flag and not slip_state:
+            elif record_data_flag:
                 now = rospy.get_rostime()
                 worksheet.write(row, col, "SLIP Start")
                 worksheet.write(row, col+1, str(now.secs)+"."+str(now.nsecs))
                 worksheet.write_formula(row, col+2, '=($B%d/86400)+DATE(1970,1,1)' % (row+1), time_format)
 
                 row += 1
-                slip_state = not slip_state
+                #slip_state = not slip_state
                 # res = keyboard_command_client(SLIP)
                 # rospy.loginfo(res)
                 rospy.loginfo("SLIP START")
 
-            elif record_data_flag and slip_state:
-                now = rospy.get_rostime()
-                worksheet.write(row, col, "SLIP Stop")
-                worksheet.write(row, col+1, str(now.secs)+"."+str(now.nsecs))
-                worksheet.write_formula(row, col+2, '=($B%d/86400)+DATE(1970,1,1)' % (row+1), time_format)
+            # elif record_data_flag and slip_state:
+            #     now = rospy.get_rostime()
+            #     worksheet.write(row, col, "SLIP Stop")
+            #     worksheet.write(row, col+1, str(now.secs)+"."+str(now.nsecs))
+            #     worksheet.write_formula(row, col+2, '=($B%d/86400)+DATE(1970,1,1)' % (row+1), time_format)
 
-                row += 1
-                slip_state = not slip_state
-                # res = keyboard_command_client(NO_SLIP)
-                # rospy.loginfo(res)
-                rospy.loginfo("SLIP STOP")
+            #     row += 1
+            #     slip_state = not slip_state
+            #     # res = keyboard_command_client(NO_SLIP)
+            #     # rospy.loginfo(res)
+            #     rospy.loginfo("SLIP STOP")
 
             return False
 
@@ -137,10 +137,10 @@ def wait_for_user_input():
 
 if __name__ == '__main__':
     try:
-        slip_state = False
+        #slip_state = False
         # pub = rospy.Publisher('user_input', String, queue_size=10)
         rospy.init_node('keyboard_controller', anonymous=True)
-        rate = rospy.Rate(10) # 10hz
+        rate = rospy.Rate(100) # 100hz
 
         rospy.on_shutdown(terminateCallback)
 
@@ -152,7 +152,7 @@ if __name__ == '__main__':
             # rospack = rospkg.RosPack()
             # rospack.get_path('rospy_tutorials')
             # workbook = xlsxwriter.Workbook(rospack.get_path('uskin_ros_publisher') + '/scripts/Grasp_test.xlsx')
-            workbook = xlsxwriter.Workbook(csv_file_name + "_" + datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + ".xlsx")
+            workbook = xlsxwriter.Workbook(csv_file_name + "_" + (datetime.datetime.now() - datetime.timedelta(milliseconds=18)).strftime("%Y-%m-%d-%H-%M-%S") + ".xlsx")
             worksheet = workbook.add_worksheet()
 
             # Add a bold format to use to highlight cells.
