@@ -1,0 +1,15 @@
+<launch>
+
+  <arg name="grasp_number" default="1" />
+
+  <!-- include grid map visualizer launcher-->
+  <include file="$(find uskin_ros_publisher)/launch/grid_map_visualization.launch">
+  </include>
+
+  <!-- Launch Keyboard reader node for manual labelling. Rosbag recorder node-->
+  
+  <node name="produce_manual_labels" pkg="uskin_ros_publisher" type="produce_manual_labels.py" output="screen" launch-prefix="xterm -e" >
+    <param name="json_file_name" value="$(find uskin_ros_publisher)/config/config_produce_manual_labels.json"/>
+  </node>
+
+</launch>
