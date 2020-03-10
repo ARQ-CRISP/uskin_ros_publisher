@@ -28,7 +28,7 @@ void ploterCallback(const uskin_ros_publisher::uskinFrame &msg)
   // Create grid map.
   GridMap map({"elevation", "normal_x", "normal_y", "normal_z"});
   map.setFrameId("map");
-  map.setGeometry(Length(120, 180), 30);
+  map.setGeometry(Length(90, 180), 30);
 
   // Add data to grid map.
   ros::Time time = ros::Time::now();
