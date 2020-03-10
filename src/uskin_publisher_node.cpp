@@ -22,6 +22,7 @@ bool is_publishing = false;
 bool is_first_data_received = false;
 UskinSensor *uskin;
 _uskin_node_time_unit_reading *instant_frame_data;
+std::ofstream csv_file;
 
 void do_stuff()
 {
@@ -157,7 +158,6 @@ void constructMessages(uskin_ros_publisher::uskinFrame *uskin_frame_reading_msg,
     geometry_msgs::PointStamped uskin_node_reading_msg;
     geometry_msgs::PointStamped uskin_node_reading_normalized_msg;
 
-
     contructMessage(&uskin_node_reading_msg, &instant_frame_data[i]);
     uskin_frame_reading_msg->frame.push_back(uskin_node_reading_msg);
 
@@ -272,6 +272,40 @@ int main(int argc, char **argv)
 
   // Calibrate the sensor
   uskin->CalibrateSensor();
+
+  time_t timer;
+  struct tm *timeinfo;
+  char csv_name[20];
+  time(&timer);
+  timeinfo = localtime(&timer);
+
+  strftime(csv_name, 20, "%F-%H-%M-%S", timeinfo);
+
+  // Open file with provided filename and timestamp
+  csv_file.open(log_file_path + "_" + std::string(csv_name) + ".calibration.csv");
+
+  csv_file << "CanID,";
+
+  csv_file << "X Min Value, X Max Value, Y Min Values, Y Max Values, Z Min Values, Z Max Values";
+
+  csv_file << std::endl;
+
+  frame_min_reads = uskin->getCalibrationValues();
+
+  for (int i = 0; i < uskin->GetUskinFrameSize(); i++)
+  {
+    int canID = uskin->convertIndextoCanID(i);
+    csv_file
+        << canID << "," << frame_min_reads[i][0] << ","
+        << "45000"
+        << "," << frame_min_reads[i][1] << ","
+        << "25000"
+        << "," << frame_min_reads[i][2] << ","
+        << "25000";
+    csv_file << std::endl;
+  }
+
+  csv_file.close();
 
   // uskin->SaveData(csv_data_file_path);
   // uskin->SaveNormalizedData(csv_normalized_data_file_path);
