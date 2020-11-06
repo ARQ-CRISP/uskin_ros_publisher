@@ -24,9 +24,6 @@ class ManualLabelsRecord:
 
     def getTimestampStartExperiment(self):
         return self.timestamps[0]
-
-    def getTimestampEndExperiment(self):
-        return self.timestamps[-1]
     
     def getTimestampsSlips(self):
         return self.timestamps[1:-1]
@@ -39,6 +36,9 @@ class ManualLabelsRecord:
             # Reset timestamps
             self.timestamps[index] = (self.timestamps[index] - ground_timestamp)*1000
     
+    def getTimestampEndExperiment(self):
+        return self.timestamps[-1]
+        
     def setTimestampEndExperiment(self, timestamp):
         self.timestamps[-1] = timestamp
 

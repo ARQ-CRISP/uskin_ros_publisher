@@ -1,3 +1,4 @@
+# Script to analyze tactile data sampling frequency
 import rospy
 import rosbag
 import numpy as np

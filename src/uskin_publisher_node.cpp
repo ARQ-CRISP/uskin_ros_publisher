@@ -49,7 +49,6 @@ void do_stuff()
     constructMessages(&uskin_frame_reading_msg, &normalized_uskin_frame_reading_msg, uskin, count, constructPointStamped, constructPointStampedNormalized);
     uskin_xyz_publisher.publish(uskin_frame_reading_msg);
     normalized_uskin_xyz_publisher.publish(normalized_uskin_frame_reading_msg);
-    ;
     // pub_b.publish(msg);
     is_publishing = false;
     count++;
@@ -273,6 +272,7 @@ int main(int argc, char **argv)
   // Calibrate the sensor
   uskin->CalibrateSensor();
 
+  /////////// Store calibration values ///////////
   time_t timer;
   struct tm *timeinfo;
   char csv_name[20];
@@ -297,15 +297,17 @@ int main(int argc, char **argv)
     int canID = uskin->convertIndextoCanID(i);
     csv_file
         << canID << "," << frame_min_reads[i][0] << ","
-        << "45000"
+        << "45000" //maximum x reading
         << "," << frame_min_reads[i][1] << ","
-        << "25000"
+        << "25000" //maximum y reading
         << "," << frame_min_reads[i][2] << ","
-        << "25000";
+        << "25000"; //maximum z reading
     csv_file << std::endl;
   }
 
   csv_file.close();
+
+  ////////////////////////////////////////////
 
   // uskin->SaveData(csv_data_file_path);
   // uskin->SaveNormalizedData(csv_normalized_data_file_path);

@@ -66,11 +66,17 @@ class VideoRecordPublisher:
 
         # flags if movement is corrently being detected
         self.move_detect = False
+        
+        # flags if video end has been reached
+        self.has_reach_end = False
+
 
         # stores video_frames
         self.video_frames_resized = []
 
         self.current_index = -1
+
+        self.end_experiment_timestamp = None
 
         cv2.namedWindow('frame')
         cv2.startWindowThread()
@@ -165,6 +171,7 @@ class VideoRecordPublisher:
             if not frame_exists:
                 self.current_index -= 1
                 print('End of the video Reached!!!')
+                self.has_reach_end = True
             return frame_exists, frame
 
         return None, None
@@ -185,3 +192,9 @@ class VideoRecordPublisher:
 
         cv2.waitKey(1)
         # cv2.destroyAllWindows()
+
+    def setTimestampEndExperiment(self, timestamp):
+        self.end_experiment_timestamp = timestamp
+
+    def getTimestampEndExperiment(self):
+        return self.end_experiment_timestamp

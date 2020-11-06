@@ -7,7 +7,7 @@ from uskin_ros_publisher.msg import uskinFrame
 
 class TactileRecordPublisher:
 
-    def __init__(self, bag_file_name, first_timestamp):
+    def __init__(self, bag_file_name, first_timestamp, fine_tuned_shifted_elements=0):
 
         self.current_index = 0
         self.initial_tactile_index = 0
@@ -20,6 +20,8 @@ class TactileRecordPublisher:
         # Used to adjust initial tactile frame, if necessary
         self.aux_index_a = -1
         self.aux_index_b = -1
+
+        self.end_experiment_timestamp = None
 
         print('=================================================================================')
         print('Loading Tactile data')
@@ -49,16 +51,18 @@ class TactileRecordPublisher:
         print("Searching for tactile initial timestamp (at {})...".format(
             first_timestamp))
         print("Number of tactile frames is {}".format(len(self.raw_timestamps)))
-        for t in self.raw_timestamps:
+        for index, time in enumerate(self.raw_timestamps):
             # current_t = float(str(t.secs)+"."+str(t.nsecs))
             # print("Checking timestamp {}".format(current_t))
-            if first_timestamp < t:
+            if first_timestamp < time:
                 print("Found initial timestamp {} for tactile data at: {}".format(
-                    first_timestamp, t))
-                self.initial_tactile_index = self.current_index
-                self.resetTimestamps(t)
-                # self.timestamps = np.array(self.raw_timestamps)
-                # self.timestamps = (self.timestamps-first_timestamp)*1000
+                    first_timestamp, time))
+
+                # fine_tuned_shifted_elements is 0 unless there is already some stored data relative to the experiment
+                self.initial_tactile_index = self.current_index + fine_tuned_shifted_elements
+                
+                # self.timestamps is created at resetTimestamps()
+                self.resetTimestamps(self.raw_timestamps[index+fine_tuned_shifted_elements])
                 break
             else:
                 self.current_index += 1
@@ -93,6 +97,8 @@ class TactileRecordPublisher:
     def updateNextIndex(self):
         if self.current_index + self.velocity < len(self.messages["/uskin_xyz_values_normalized"]):
             self.current_index += self.velocity
+        else:
+            print('End of the tactile Reached!!!')
 
     def updatePreviousIndex(self):
         if self.current_index - self.velocity >= 0:
@@ -144,6 +150,7 @@ class TactileRecordPublisher:
             print('Tactile adjustment: First boundary set!')
             self.aux_index_a = self.current_index
 
+            return None
         else:
             print('Tactile adjustment: Second Boundary set!')
             self.aux_index_b = self.current_index
@@ -157,6 +164,8 @@ class TactileRecordPublisher:
 
             self.aux_index_a = -1
             self.aux_index_b = -1
+
+            return amount_to_shift
 
     # Ground timestamps to initial_timestamo
     def resetTimestamps(self, ground_value):
@@ -203,6 +212,12 @@ class TactileRecordPublisher:
         # Get tactile image difference. For now we are using tactile normalized values
         for i in range(1,readings_no): 
             self.tactile_readings_diff.append(self.np_tactile_readings_normalized[:,:,i] - self.np_tactile_readings_normalized[:,:,i-1])
-            if np.std(self.tactile_readings_diff[-1]) > 0.1:
+            if np.std(self.tactile_readings_diff[-1]) > 0.25:
                 self.np_tactile_changes_label[i] = 1
+
+    def setTimestampEndExperiment(self, timestamp):
+        self.end_experiment_timestamp = timestamp
+
+    def getTimestampEndExperiment(self):
+        return self.end_experiment_timestamp
 
