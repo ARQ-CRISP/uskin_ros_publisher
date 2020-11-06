@@ -1,0 +1,20 @@
+0 - No arm movement or slip (or any other relevant event)
+1 - Static slip. Robot arm NOT moving, object-gripper contact displacement. 
+	Only if it can be detected visually (video)
+	Between samples where you can see displacements over the active taxels
+	If robotic arm starts moving meanwhile, tag 5 should be used instead
+2 - Object Release:
+	Samples when robotic gripper releases the object.
+	Many experiences won't have this tag since there is not intentional release of the object   		(object slips away)
+3 - Object grasp:
+	Samples when robotis  gripper is grasping the object
+	Starts at first contact, up until the end of the task, or when object is stably grasped (no 		taxel changes)
+4 - Robotic arm movement. No object gripper slip.
+5 - Robotic arm movement + Object (dynamic) slip:
+	When we are able to detect it visually (or in some cases through changes on the tactile taxels)
+	Up until arm stops moving, or the object is again firmly hold by the gripper.
+6 - Other events:
+	This could be: Losing contact with the object, only to regain it moments later; Other unpredicted object-gripper tactile events.
+        We can consider removing this samples when fitting a model.
+
+The experiment finishes the moement the object is released of slips away from the robotic gripper

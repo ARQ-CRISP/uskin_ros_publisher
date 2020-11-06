@@ -28,7 +28,7 @@ void ploterCallback(const uskin_ros_publisher::uskinFrame &msg)
   // Create grid map.
   GridMap map({"elevation", "normal_x", "normal_y", "normal_z"});
   map.setFrameId("map");
-  map.setGeometry(Length(120, 180), 30);
+  map.setGeometry(Length(90, 180), 30);
 
   // Add data to grid map.
   ros::Time time = ros::Time::now();
@@ -45,7 +45,7 @@ void ploterCallback(const uskin_ros_publisher::uskinFrame &msg)
     map.at("normal_y", *it) = -1 * msg.frame[(index(1)) * 4 + (index(0))].point.x * 10 / vector_lenght;
     map.at("normal_z", *it) = msg.frame[(index(1)) * 4 + (index(0))].point.z * 10 / vector_lenght;
 
-    ROS_INFO("Printing node %s at position x:%i, y:%i, with value %f", msg.frame[(index(1)) * 4 + (index(0))].header.frame_id.c_str(), index(0), index(1), msg.frame[(index(1)) * 4 + (index(0))].point.z);
+    // ROS_INFO("Printing node %s at position x:%i, y:%i, with value %f", msg.frame[(index(1)) * 4 + (index(0))].header.frame_id.c_str(), index(0), index(1), msg.frame[(index(1)) * 4 + (index(0))].point.z);
   }
 
 // Publish grid map.

@@ -13,10 +13,81 @@
  */
 
 #include "uskin_ros_publisher/uskin_publisher_node.h"
+#include "uskin_ros_publisher/KeyboardCommand.h"
 
 std::string log_file_path;
 std::string csv_normalized_data_file_path;
 std::string csv_data_file_path;
+bool is_publishing = false;
+bool is_first_data_received = false;
+UskinSensor *uskin;
+_uskin_node_time_unit_reading *instant_frame_data;
+std::ofstream csv_file;
+
+void do_stuff()
+{
+
+  ros::NodeHandlePtr n = boost::make_shared<ros::NodeHandle>();
+
+  int count = 0; // Message sequence counter
+
+  ros::Publisher uskin_xyz_publisher = n->advertise<uskin_ros_publisher::uskinFrame>("/uskin_xyz_values", 1000);
+  ros::Publisher normalized_uskin_xyz_publisher = n->advertise<uskin_ros_publisher::uskinFrame>("/uskin_xyz_values_normalized", 1000);
+
+  // ros::Publisher pub_b = node->advertise<std_msgs::Empty>("topic_b", 10);
+  while (!is_first_data_received)
+  {
+  }
+  ros::Rate rate(180);
+  while (ros::ok())
+  {
+    uskin_ros_publisher::uskinFrame uskin_frame_reading_msg, normalized_uskin_frame_reading_msg;
+    is_publishing = true;
+    // ROS_ERROR("Timer!!!!!");// Set message objects with new readings and publish it
+
+    // Set message objects with normalized readings and publish it
+    constructMessages(&uskin_frame_reading_msg, &normalized_uskin_frame_reading_msg, uskin, count, constructPointStamped, constructPointStampedNormalized);
+    uskin_xyz_publisher.publish(uskin_frame_reading_msg);
+    normalized_uskin_xyz_publisher.publish(normalized_uskin_frame_reading_msg);
+    // pub_b.publish(msg);
+    is_publishing = false;
+    count++;
+    rate.sleep();
+  }
+}
+
+// bool process_keyboard_command(uskin_ros_publisher::KeyboardCommand::Request &req, uskin_ros_publisher::KeyboardCommand::Response &res)
+// {
+//   std::stringstream ss;
+
+//   switch (req.command)
+//   {
+//   case START_RECORD:
+
+//     ss << "OK " << req.command;
+//     res.message = ss.str();
+
+//     ROS_ERROR("sending back response: %s", res.message.c_str());
+//     break;
+//     // case END_RECORD:
+//     //   /* code */
+//     //   break;
+//     // case SLIP:
+//     //   /* code */
+//     //   break;
+//     // case NO_SLIP:
+//     //   /* code */
+//     //   break;
+//     // case CALIBRATE:
+//     //   /* code */
+//     //   break;
+
+//   default:
+//     break;
+//   }
+
+//   return true;
+// }
 
 void constructPointStamped(geometry_msgs::PointStamped *uskin_node_reading_msg, _uskin_node_time_unit_reading *current_node_reading)
 {
@@ -30,6 +101,18 @@ void constructPointStamped(geometry_msgs::PointStamped *uskin_node_reading_msg, 
   return;
 }
 
+void constructPointStampedNormalized(geometry_msgs::PointStamped *uskin_node_reading_msg, _uskin_node_time_unit_reading *current_node_reading)
+{
+  std::stringstream node_id_str;
+  node_id_str << std::hex << current_node_reading->node_id;
+
+  uskin_node_reading_msg->header.frame_id = node_id_str.str();
+  uskin_node_reading_msg->point.x = current_node_reading->x_value_normalized;
+  uskin_node_reading_msg->point.y = current_node_reading->y_value_normalized;
+  uskin_node_reading_msg->point.z = current_node_reading->z_value_normalized;
+  return;
+}
+
 void constructUskinFrame(uskin_ros_publisher::uskinFrame *uskin_frame_reading_msg, int sequence)
 {
   uskin_frame_reading_msg->header.seq = sequence;
@@ -37,10 +120,11 @@ void constructUskinFrame(uskin_ros_publisher::uskinFrame *uskin_frame_reading_ms
   return;
 }
 
-void constructMessage(uskin_ros_publisher::uskinFrame *uskin_frame_reading_msg, UskinSensor *uskin, int sequence)
+void constructMessage(uskin_ros_publisher::uskinFrame *uskin_frame_reading_msg, UskinSensor *uskin, int sequence, void (*contructMessage)(geometry_msgs::PointStamped *, _uskin_node_time_unit_reading *))
 {
   // constructPointStamped for each node reading
   int number_of_nodes = uskin->GetUskinFrameSize();
+
   for (int i = 0; i < number_of_nodes; i++)
   {
     geometry_msgs::PointStamped uskin_node_reading_msg;
@@ -49,15 +133,41 @@ void constructMessage(uskin_ros_publisher::uskinFrame *uskin_frame_reading_msg, 
 
     current_node_reading = uskin->GetNodeData_xyzValues(i);
 
-    ROS_INFO("%s", current_node_reading->to_str().c_str());
+    // ROS_INFO("%s", current_node_reading->to_str().c_str());
 
-    constructPointStamped(&uskin_node_reading_msg, current_node_reading);
+    contructMessage(&uskin_node_reading_msg, current_node_reading);
     uskin_frame_reading_msg->frame.push_back(uskin_node_reading_msg);
 
-    ROS_INFO_STREAM("Values for element: " << std::to_string(i) << " " << current_node_reading->x_value << " " << current_node_reading->y_value << " " << current_node_reading->z_value);
+    ROS_INFO_STREAM("Values for element: " << std::to_string(i) << " " << uskin_node_reading_msg.point.x << " " << uskin_node_reading_msg.point.y << " " << uskin_node_reading_msg.point.z);
   }
   // constructUskinFrame for frame reading (containing all node readings)
   constructUskinFrame(uskin_frame_reading_msg, sequence);
+
+  return;
+}
+
+void constructMessages(uskin_ros_publisher::uskinFrame *uskin_frame_reading_msg, uskin_ros_publisher::uskinFrame *uskin_frame_reading_normalized_msg, UskinSensor *uskin, int sequence, void (*contructMessage)(geometry_msgs::PointStamped *, _uskin_node_time_unit_reading *), void (*contructMessage2)(geometry_msgs::PointStamped *, _uskin_node_time_unit_reading *))
+{
+  // constructPointStamped for each node reading
+  int number_of_nodes = uskin->GetUskinFrameSize();
+
+  for (int i = 0; i < number_of_nodes; i++)
+  {
+
+    geometry_msgs::PointStamped uskin_node_reading_msg;
+    geometry_msgs::PointStamped uskin_node_reading_normalized_msg;
+
+    contructMessage(&uskin_node_reading_msg, &instant_frame_data[i]);
+    uskin_frame_reading_msg->frame.push_back(uskin_node_reading_msg);
+
+    contructMessage2(&uskin_node_reading_normalized_msg, &instant_frame_data[i]);
+    uskin_frame_reading_normalized_msg->frame.push_back(uskin_node_reading_normalized_msg);
+
+    ROS_INFO_STREAM("Values for element: " << std::to_string(i) << " " << uskin_node_reading_msg.point.x << " " << uskin_node_reading_msg.point.y << " " << uskin_node_reading_msg.point.z);
+  }
+  // constructUskinFrame for frame reading (containing all node readings)
+  constructUskinFrame(uskin_frame_reading_msg, sequence);
+  constructUskinFrame(uskin_frame_reading_normalized_msg, sequence);
 
   return;
 }
@@ -131,40 +241,24 @@ void retrieveNormalizedDataCSVPathMode(ros::NodeHandle n)
 int main(int argc, char **argv)
 {
 
-  int count = 0; // Message sequence counter
-  int number_of_nodes;
   //int number_of_subscribers = 0;
 
   ros::init(argc, argv, "uskin_publisher_node");
 
-  ros::NodeHandle n;
+  ros::NodeHandlePtr n = boost::make_shared<ros::NodeHandle>();
 
-  retrieveLogPathMode(n);
-  retrieveNormalizedDataCSVPathMode(n);
-  retrieveDataCSVPathMode(n);
+  retrieveLogPathMode(*n);
+  retrieveNormalizedDataCSVPathMode(*n);
+  retrieveDataCSVPathMode(*n);
 
-  ros::Publisher uskin_xyz_publisher = n.advertise<uskin_ros_publisher::uskinFrame>("/uskin_xyz_values", 1000);
-  ros::Publisher normalized_uskin_xyz_publisher = n.advertise<uskin_ros_publisher::uskinFrame>("/uskin_xyz_values_normalized", 1000);
+  // ros::ServiceServer service = n->advertiseService("keyboard_command", process_keyboard_command);
 
-  ros::Rate loop_rate(1);
+  // ros::Rate loop_rate(1);
 
-  UskinSensor *uskin = new UskinSensor(log_file_path); // Will connect to "can0" network  and device "0x201" by default
-
-  // Later could be used to filter incoming messages
-  /*  struct can_filter rfilter[1];
-
-  rfilter[0].can_id = 0x135;
-  rfilter[0].can_mask = CAN_SFF_MASK; */
-  //rfilter[1].can_id   = 0x101;
-  //rfilter[1].can_mask = CAN_SFF_MASK;
+  // UskinSensor *uskin = boost::make_shared<UskinSensor>;
+  uskin = new UskinSensor(log_file_path); // Will connect to "can0" network  and device "0x201" by default
 
   ROS_INFO("Let's start the sensor");
-
-  // Check if there are any subscribers to uskin_xyz_publisher
-  // while (number_of_subscribers == 0)
-  // {
-  //   number_of_subscribers = uskin_xyz_publisher.getNumSubscribers();
-  // }
 
   // Starting the sensor
   if (!uskin->StartSensor())
@@ -175,41 +269,74 @@ int main(int argc, char **argv)
     return (-1);
   }
 
-
   // Calibrate the sensor
   uskin->CalibrateSensor();
 
-  // uskin->SaveData("../csv_files/uskin_data_");
-  uskin->SaveData(csv_data_file_path);
-  uskin->SaveNormalizedData(csv_normalized_data_file_path);
+  /////////// Store calibration values ///////////
+  time_t timer;
+  struct tm *timeinfo;
+  char csv_name[20];
+  time(&timer);
+  timeinfo = localtime(&timer);
+
+  strftime(csv_name, 20, "%F-%H-%M-%S", timeinfo);
+
+  // Open file with provided filename and timestamp
+  csv_file.open(log_file_path + "_" + std::string(csv_name) + ".calibration.csv");
+
+  csv_file << "CanID,";
+
+  csv_file << "X Min Value, X Max Value, Y Min Values, Y Max Values, Z Min Values, Z Max Values";
+
+  csv_file << std::endl;
+
+  frame_min_reads = uskin->getCalibrationValues();
+
+  for (int i = 0; i < uskin->GetUskinFrameSize(); i++)
+  {
+    int canID = uskin->convertIndextoCanID(i);
+    csv_file
+        << canID << "," << frame_min_reads[i][0] << ","
+        << "45000" //maximum x reading
+        << "," << frame_min_reads[i][1] << ","
+        << "25000" //maximum y reading
+        << "," << frame_min_reads[i][2] << ","
+        << "25000"; //maximum z reading
+    csv_file << std::endl;
+  }
+
+  csv_file.close();
+
+  ////////////////////////////////////////////
+
+  // uskin->SaveData(csv_data_file_path);
+  // uskin->SaveNormalizedData(csv_normalized_data_file_path);
 
   ROS_INFO("Let's retrieve some data");
 
+  // spawn another thread
+  std::thread worker(do_stuff);
+
   while (ros::ok() && !ros::isShuttingDown())
   {
-
+    uskin_time_unit_reading instant_reading;
     ros::master::check();
+
     // Message objects to be published
-    uskin_ros_publisher::uskinFrame uskin_frame_reading_msg, normalized_uskin_frame_reading_msg;
     // Retrieve new data
+    while (is_publishing)
+    {
+    }
     uskin->RetrieveFrameData();
+    uskin->NormalizeData();
+
+    instant_frame_data = uskin->GetFrameData();
+
+    is_first_data_received = true;
 
     ROS_INFO("New uskin Frame data sucessfuly retrieved\n");
 
-    // Set message objects with new readings and publish it
-    constructMessage(&uskin_frame_reading_msg, uskin, count);
-    uskin_xyz_publisher.publish(uskin_frame_reading_msg);
-
-    // Normalize and publish data
-    uskin->NormalizeData();
-
-    // Set message objects with normalized readings and publish it
-    constructMessage(&normalized_uskin_frame_reading_msg, uskin, count);
-    normalized_uskin_xyz_publisher.publish(normalized_uskin_frame_reading_msg);
-
-    ros::spinOnce();
-
-    count++;
+    // ros::spinOnce();
   }
 
   uskin->StopSensor();

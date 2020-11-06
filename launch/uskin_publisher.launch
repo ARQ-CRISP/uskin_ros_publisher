@@ -1,16 +1,32 @@
 <launch>
 
+  <arg name="grasp_number" default="1" />
+  <arg name="object" default="" />
+  <arg name="method" default="" />
+  <arg name="save_data" default="false" />
+
   <!-- Launch uskin publisher node-->
   <node pkg="uskin_ros_publisher" type="uskin_ros_publisher_node" name="uskin_publisher">
   <!-- Change the following paths to store log and CSV files, if necessary -->
-    <param name="log_file_path" value="$(find uskin_ros_publisher)/log_files/uSkinCanDriver_log" />
-    <param name="csv_data_file_path" value="$(find uskin_ros_publisher)/csv_files/uskin_data" />
-    <param name="csv_normalized_data_file_path" value="$(find uskin_ros_publisher)/csv_files/uskin_normalized_data" />
+    <!-- <param name="log_file_path" value="$(find uskin_ros_publisher)/files/log_files/Grasp_$(arg grasp_number)_$(arg object)_$(arg method)" /> -->
+    <param name="log_file_path" value="$(find uskin_ros_publisher)/files/debug/Grasp_$(arg grasp_number)_$(arg object)_$(arg method)" />
+    <param name="log_file_path" value="$(find uskin_ros_publisher)/files/log_files/Grasp_$(arg grasp_number)_$(arg object)_$(arg method)" if="$(arg save_data)"/>
+    <param name="csv_data_file_path" value="$(find uskin_ros_publisher)/files/debug/uskin_data" />
+    <param name="csv_normalized_data_file_path" value="$(find uskin_ros_publisher)/files/debug/uskin_normalized_data" />
   </node>
-  
-  
+
   <!-- Include grid map visualizer launcher-->
   <include file="$(find uskin_ros_publisher)/launch/grid_map_visualization.launch">
   </include>
+
+  <!-- Launch Keyboard reader node for manual labelling. Rosbag recorder node-->
+  <group if="$(arg save_data)">
+    <node name="record_slips" pkg="uskin_ros_publisher" type="record_slips.py" output="screen" launch-prefix="xterm -e" >
+      <param name="csv_file_name" value="$(find uskin_ros_publisher)/files/csv_files/Grasp_$(arg grasp_number)_$(arg object)_$(arg method)"/>
+    </node>
+
+    <node pkg="rosbag" type="record" name="Grasp_$(arg grasp_number)_$(arg object)_$(arg method)" 
+   args="record -o $(find uskin_ros_publisher)/files/ros_bags/rosbag_Grasp_$(arg grasp_number)_$(arg object)_$(arg method) /uskin_xyz_values /uskin_xyz_values_normalized" />
+  </group>
 
 </launch>

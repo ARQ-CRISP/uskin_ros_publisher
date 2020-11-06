@@ -1,0 +1,19 @@
+{
+    "experiment" : {
+        "method" : "GGCNN2",
+        "object" : "brush",
+        "pose_num" : 5,
+        "experiment_num" : 12
+    },
+    "states_file_path": "/media/rodrigo/WD_BLACK/Grasp_Benchmarking_Experiments/Experiments/${method}/objects/${object}/states/",       
+    "tactile_data_path" : "/media/rodrigo/WD_BLACK/Grasp_Benchmarking_Experiments/Experiments/${method}/objects/${object}/ros_bags/",
+    "vision_data_path" : "/media/rodrigo/WD_BLACK/Grasp_Benchmarking_Experiments/Experiments/${method}/objects/${object}/videos/",
+    "manual_labels_path" : "/media/rodrigo/WD_BLACK/Grasp_Benchmarking_Experiments/Experiments/${method}/objects/${object}/csv_files/",
+    "h5py_file_path": "/media/rodrigo/WD_BLACK/Grasp_Benchmarking_Experiments/Experiments/${method}/labels/",
+    "h5py_experiment_file_name": "slipDataset_${object}_other.h5",        
+    "h5py_vision_file_name": "slipDataset_${object}_vision.h5",        
+    "h5py_tactile_file_name": "slipDataset_${object}_tactile.h5"
+    
+}
+
+
