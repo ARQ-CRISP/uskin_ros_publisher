@@ -135,9 +135,9 @@ class TactileRecordPublisher:
         # Checking if data is in sync
         if (len(self.messages["/uskin_xyz_values"]) != len(self.messages["/uskin_xyz_values_normalized"])):
             print('Problems with data syncronization!')
-        elif ( -200 > (self.messages["/uskin_xyz_values"][0].header.stamp.nsecs - self.messages["/uskin_xyz_values_normalized"][0].header.stamp.nsecs) < 200):
-                print('Problems with data syncronization!')
-                return False
+        # elif ( np.absolute(self.messages["/uskin_xyz_values"][0].header.stamp.nsecs - self.messages["/uskin_xyz_values_normalized"][0].header.stamp.nsecs) > 200):
+        #         print('Problems with data syncronization!')
+        #         return False
 
         print('Tactile raw data array has size: {}'.format(len(self.messages["/uskin_xyz_values"])))
         print('Tactile normalized data array has size: {}'.format(len(self.messages["/uskin_xyz_values_normalized"])))

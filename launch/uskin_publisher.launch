@@ -22,11 +22,13 @@
   <!-- Launch Keyboard reader node for manual labelling. Rosbag recorder node-->
   <group if="$(arg save_data)">
     <node name="record_slips" pkg="uskin_ros_publisher" type="record_slips.py" output="screen" launch-prefix="xterm -e" >
-      <param name="csv_file_name" value="$(find uskin_ros_publisher)/files/csv_files/Grasp_$(arg grasp_number)_$(arg object)_$(arg method)"/>
+      <param name="csv_file_name" value="$(find uskin_ros_publisher)/files/csv_files/manualTesting/Grasp_$(arg grasp_number)_$(arg object)_$(arg method)"/>
     </node>
 
     <node pkg="rosbag" type="record" name="Grasp_$(arg grasp_number)_$(arg object)_$(arg method)" 
-   args="record -o $(find uskin_ros_publisher)/files/ros_bags/rosbag_Grasp_$(arg grasp_number)_$(arg object)_$(arg method) /uskin_xyz_values /uskin_xyz_values_normalized" />
+  args="record -o $(find uskin_ros_publisher)/files/ros_bags/manualTesting/rosbag_Grasp_$(arg grasp_number)_$(arg object)_$(arg method) /uskin_xyz_values /uskin_xyz_values_normalized" />
+
+   <!-- args="record -o $(find uskin_ros_publisher)/files/ros_bags/manualTesting/rosbag_Grasp_$(arg grasp_number)_$(arg object)_$(arg method) /uskin_xyz_values" /> -->
   </group>
 
 </launch>

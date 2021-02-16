@@ -1,17 +1,13 @@
 {
     "experiment" : {
         "method" : "GGCNN2",
-        "object" : "brush",
-        "pose_num" : 5,
-        "experiment_num" : 12
+        "object" : "SpoolSolder",
+        "pose_num" : 1,
+        "experiment_num" : 1
     },
-    "states_file_path": "/media/rodrigo/WD_BLACK/Grasp_Benchmarking_Experiments/Experiments/${method}/objects/${object}/states/",       
-    "tactile_data_path" : "/media/rodrigo/WD_BLACK/Grasp_Benchmarking_Experiments/Experiments/${method}/objects/${object}/ros_bags/",
-    "vision_data_path" : "/media/rodrigo/WD_BLACK/Grasp_Benchmarking_Experiments/Experiments/${method}/objects/${object}/videos/",
-    "manual_labels_path" : "/media/rodrigo/WD_BLACK/Grasp_Benchmarking_Experiments/Experiments/${method}/objects/${object}/csv_files/",
-    "h5py_file_path": "/media/rodrigo/WD_BLACK/Grasp_Benchmarking_Experiments/Experiments/${method}/labels/",
-    "h5py_experiment_file_name": "slipDataset_${object}_other.h5",        
-    "h5py_vision_file_name": "slipDataset_${object}_vision.h5",        
+    "tactile_data_path" : "/home/rodrigo/Documents/github/uskin_publisher/src/uskin_ros_publisher/files/ros_bags/manualTesting/",
+    "manual_labels_path" : "/home/rodrigo/Documents/github/uskin_publisher/src/uskin_ros_publisher/files/csv_files/manualTesting/",
+    "h5py_file_path": "/home/rodrigo/Documents/github/uskin_publisher/src/uskin_ros_publisher/files/labels/",      
     "h5py_tactile_file_name": "slipDataset_${object}_tactile.h5"
     
 }

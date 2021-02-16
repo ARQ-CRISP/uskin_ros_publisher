@@ -15,8 +15,8 @@ import glob  # Search for files' paths
 
 from uskin_ros_publisher import ManualLabelsRecord
 from uskin_ros_publisher import TactileRecordPublisher
-from uskin_ros_publisher import VideoRecordPublisher
-from uskin_ros_publisher import ExperimentStatesRecord
+# from uskin_ros_publisher import VideoRecordPublisher
+# from uskin_ros_publisher import ExperimentStatesRecord
 
 
 vision_rate = 0
@@ -78,7 +78,7 @@ def getEndExperimentVisionIndex(timestamp_end):
 def getCompleteFilePaths():
 
     global config_dict
-    for file_type in ['tactile_data_path', 'vision_data_path', 'manual_labels_path', 'h5py_file_path', 'states_file_path', 'h5py_experiment_file_name', 'h5py_vision_file_name', 'h5py_tactile_file_name']:
+    for file_type in ['tactile_data_path', 'manual_labels_path', 'h5py_file_path', 'h5py_tactile_file_name']:
         config_dict[file_type] = config_dict[file_type].replace(
             "${object}", config_dict['experiment']['object'])
         config_dict[file_type] = config_dict[file_type].replace(
@@ -89,23 +89,13 @@ def getCompleteFilePaths():
     rospy.loginfo("Opening Tactile data file: {}".format(
         config_dict['tactile_data_path']))
 
-    # config_dict['vision_data_path'] = glob.glob(config_dict['vision_data_path']+config_dict['experiment']['object']+str(
-    # config_dict['experiment']['pose_num'])+'/'+config_dict['vision_data_name'])[0]
-    config_dict['vision_data_path'] = glob.glob(config_dict['vision_data_path']+config_dict['experiment']['object']+str(
-        config_dict['experiment']['pose_num'])+'/'+'MVI_' + "*.MP4")[config_dict['experiment']['experiment_num']-1]
-    rospy.loginfo("Opening Video File: {}".format(
-        config_dict['vision_data_path']))
-
+    
     config_dict['manual_labels_path'] = glob.glob(config_dict['manual_labels_path']+config_dict['experiment']['object']+str(
         config_dict['experiment']['pose_num'])+'/'+'Grasp_'+str(config_dict['experiment']['experiment_num'])+'_' + "*.xlsx")[0]
     rospy.loginfo("Opening Manual Labels File: {}".format(
         config_dict['manual_labels_path']))
 
-    config_dict['states_file_path'] = glob.glob(config_dict['states_file_path']+config_dict['experiment']['object']+'_'+str(
-        config_dict['experiment']['pose_num'])+'/'+'experiment_' + "*.yaml")[config_dict['experiment']['experiment_num']-1]
-    rospy.loginfo("Opening Experiment States File: {}".format(
-        config_dict['states_file_path']))
-
+  
     # config_dict['h5py_file_path'] = config_dict['h5py_file_path'] + \
     #     config_dict['h5py_file_name']
     # rospy.loginfo("Opening Manual Labels File: {}".format(
@@ -128,6 +118,8 @@ def readConfigFile():
         '=================================================================================')
 
     if rospy.has_param('/produce_manual_labels/json_file_name'):
+        print('Here!')
+
         config_file_path = rospy.get_param(
             "/produce_manual_labels/json_file_name")
 
@@ -172,7 +164,7 @@ def overwriteHDF5Data(experiment_key, hf):
     return
 
 
-def saveH5pyFile(experiment_key, file_path, tactile, video):
+def saveH5pyFile(experiment_key, file_path, tactile):
     rospy.loginfo(
         'Will attempt to save data into file located at {}'.format(file_path))
 
@@ -180,47 +172,47 @@ def saveH5pyFile(experiment_key, file_path, tactile, video):
     tactile_start_index = tactile.initial_tactile_index
     tactile_end_index = getEndExperimentTactileIndex(
         tactile.getTimestampEndExperiment())
-    vision_start_index = vision.initial_motion_index
-    vision_end_index = getEndExperimentVisionIndex(
-        vision.getTimestampEndExperiment())
+    # vision_start_index = vision.initial_motion_index
+    # vision_end_index = getEndExperimentVisionIndex(
+        # vision.getTimestampEndExperiment())
 
     # Checks whether all tactile and visual data has been retreieved already
-    if tactile_end_index is None or vision_end_index is None:
+    if tactile_end_index is None:
         rospy.loginfo(
-            'Error: You have to navigate torwards the end of the video before being able to save the file!')
+            'Error: You have to navigate torwards the end of the experiment before being able to save the file!')
         return False
 
-    # Saving Video data
-    hf = h5py.File(file_path+config_dict['h5py_vision_file_name'], 'a')
+    # # Saving Video data
+    # hf = h5py.File(file_path+config_dict['h5py_vision_file_name'], 'a')
 
-    # Check if experiment has already been recorded in hdf5 file.
-    if groupExistsHDF5(experiment_key, hf):
-        # Confirm that user wants to overwrite data
-        if not confirmOverwriteHDF5Data(experiment_key, hf):
-            return False
+    # # Check if experiment has already been recorded in hdf5 file.
+    # if groupExistsHDF5(experiment_key, hf):
+    #     # Confirm that user wants to overwrite data
+    #     if not confirmOverwriteHDF5Data(experiment_key, hf):
+    #         return False
 
-    rospy.loginfo('Saving {} frames of video (start index: {}, end index: {}).'.format(
-        vision_end_index-vision_start_index, vision_start_index, vision_end_index))
+    # rospy.loginfo('Saving {} frames of video (start index: {}, end index: {}).'.format(
+    #     vision_end_index-vision_start_index, vision_start_index, vision_end_index))
 
-    try:
-        group_vision = hf.create_group(experiment_key)
-        # group_vision = hf.create_group(experiment_key+'/Video')
+    # try:
+    #     group_vision = hf.create_group(experiment_key)
+    #     # group_vision = hf.create_group(experiment_key+'/Video')
 
-        group_vision.create_dataset(
-            'video_timestamps', data=vision.timestamps[vision_start_index:vision_end_index])
-        group_vision.create_dataset(
-            'video_frames', data=vision.video_frames_resized[vision_start_index:vision_end_index], compression="gzip", compression_opts=4)
-        # group_vision.create_dataset(
-        #     'video_frames', data=vision.video_frames_resized[vision_start_index:vision_end_index])
+    #     group_vision.create_dataset(
+    #         'video_timestamps', data=vision.timestamps[vision_start_index:vision_end_index])
+    #     group_vision.create_dataset(
+    #         'video_frames', data=vision.video_frames_resized[vision_start_index:vision_end_index], compression="gzip", compression_opts=4)
+    #     # group_vision.create_dataset(
+    #     #     'video_frames', data=vision.video_frames_resized[vision_start_index:vision_end_index])
 
-    except IndexError:
-        # In theory we never reach this state (safety net)
-        rospy.loginfo(
-            'Error: You have to navigate torwards the end of the video before being able to saveb the file!')
-        hf.close()
-        return False
+    # except IndexError:
+    #     # In theory we never reach this state (safety net)
+    #     rospy.loginfo(
+    #         'Error: You have to navigate torwards the end of the video before being able to saveb the file!')
+    #     hf.close()
+    #     return False
 
-    hf.close()
+    # hf.close()
 
     # Saving Tactile data
     hf = h5py.File(file_path+config_dict['h5py_tactile_file_name'], 'a')
@@ -251,24 +243,24 @@ def saveH5pyFile(experiment_key, file_path, tactile, video):
 
     hf.close()
 
-    # Experimental data
-    hf = h5py.File(file_path+config_dict['h5py_experiment_file_name'], 'a')
+    # # Experimental data
+    # hf = h5py.File(file_path+config_dict['h5py_experiment_file_name'], 'a')
 
-    # Check if experiment has already been recorded in hdf5 file.
-    if groupExistsHDF5(experiment_key, hf):
-        # Overwrite data (user has already confirmed for vision)
-        overwriteHDF5Data(experiment_key, hf)
+    # # Check if experiment has already been recorded in hdf5 file.
+    # if groupExistsHDF5(experiment_key, hf):
+    #     # Overwrite data (user has already confirmed for vision)
+    #     overwriteHDF5Data(experiment_key, hf)
 
-    rospy.loginfo('Saving other experimental data (experiment steps).')
+    # rospy.loginfo('Saving other experimental data (experiment steps).')
 
-    group_experiment = hf.create_group(experiment_key+'/experiment_states')
-    # group_experiment = hf.create_group(experiment_key+'/Experiment/experiment_states')
+    # group_experiment = hf.create_group(experiment_key+'/experiment_states')
+    # # group_experiment = hf.create_group(experiment_key+'/Experiment/experiment_states')
 
-    # Save timestamps for each experiment state
-    for k, v in exp_states.states_timestamps.items():
-        group_experiment.create_dataset(k, data=np.array(v, dtype=np.float64))
+    # # Save timestamps for each experiment state
+    # for k, v in exp_states.states_timestamps.items():
+    #     group_experiment.create_dataset(k, data=np.array(v, dtype=np.float64))
 
-    hf.close()
+    # hf.close()
     return True
 
 
@@ -336,7 +328,7 @@ def labelSamplesGroup(label):
 
 def on_press(key):
     global mode
-    global has_last_vision_frame_been_updated
+    # global has_last_vision_frame_been_updated
     global has_last_tactile_frame_been_updated
     global has_data_been_saved
     global np_tactile_slips_label
@@ -401,8 +393,7 @@ def on_press(key):
 
                 if saveH5pyFile(config_dict['experiment_key'],
                                 config_dict['h5py_file_path'],
-                                tactile,
-                                vision):
+                                tactile):
                     rospy.loginfo('Data has been saved!')
                     has_data_been_saved = True
                     return False
@@ -425,26 +416,26 @@ def on_press(key):
                     np_tactile_slips_label, shifted_elements)
             return False
 
-        elif hasattr(key, 'char') and key.char == "m":
+        # elif hasattr(key, 'char') and key.char == "m":
 
-            mode = not mode
-            rospy.loginfo("Changing navigation mode to {}".format(
-                navigation_modes[mode]))
-            return False
+        #     mode = not mode
+        #     rospy.loginfo("Changing navigation mode to {}".format(
+        #         navigation_modes[mode]))
+        #     return False
 
         elif hasattr(key, 'char') and key.char == "f":
 
             rospy.loginfo("Defining new end timestamp")
             # End experiment timestamp is being kept in manual_labels. Could be inproved in the future
-            if mode:
-                vision.setTimestampEndExperiment(
-                    vision.timestamps[vision.current_index])
-                has_last_vision_frame_been_updated = True
+            # if mode:
+            #     vision.setTimestampEndExperiment(
+            #         vision.timestamps[vision.current_index])
+            #     has_last_vision_frame_been_updated = True
 
-            else:
-                tactile.setTimestampEndExperiment(
-                    tactile.timestamps[tactile.current_index])
-                has_last_tactile_frame_been_updated = True
+            # else:
+            tactile.setTimestampEndExperiment(
+                tactile.timestamps[tactile.current_index])
+            has_last_tactile_frame_been_updated = True
 
             return False
 
@@ -525,14 +516,14 @@ def on_press(key):
             # Navigate tactile_frames
             if not mode:
                 tactile.updateNextIndex()
-                while (tactile.timestamps[tactile.current_index] >= vision.timestamps[vision.current_index+1]):
-                    _, frame = vision.getNextFrame()
-                    if frame is None:
-                        break
-            else:  # Navigate video frames
-                vision.getNextFrame()
-                while tactile.timestamps[tactile.current_index] < vision.timestamps[vision.current_index]:
-                    tactile.updateNextIndex()
+                # while (tactile.timestamps[tactile.current_index] >= vision.timestamps[vision.current_index+1]):
+                #     _, frame = vision.getNextFrame()
+                #     if frame is None:
+                #         break
+            # else:  # Navigate video frames
+            #     vision.getNextFrame()
+            #     while tactile.timestamps[tactile.current_index] < vision.timestamps[vision.current_index]:
+            #         tactile.updateNextIndex()
 
             return False
 
@@ -542,12 +533,47 @@ def on_press(key):
             # Navigate tactile_frames
             if not mode:
                 tactile.updatePreviousIndex()
-                while (tactile.timestamps[tactile.current_index] < vision.timestamps[vision.current_index]):
-                    vision.getPreviousFrame()
-            else:  # Navigate video frames
-                vision.getPreviousFrame()
-                while tactile.timestamps[tactile.current_index-1] >= vision.timestamps[vision.current_index]:
-                    tactile.updatePreviousIndex()
+                # while (tactile.timestamps[tactile.current_index] < vision.timestamps[vision.current_index]):
+                #     vision.getPreviousFrame()
+            # else:  # Navigate video frames
+            #     vision.getPreviousFrame()
+            #     while tactile.timestamps[tactile.current_index-1] >= vision.timestamps[vision.current_index]:
+                    # tactile.updatePreviousIndex()
+            return False
+
+        elif key == keyboard.Key.up:
+
+            rospy.loginfo("Velocity increasead by 2x")
+
+            # Navigate tactile_frames
+            if not mode:
+                tactile.multiplyVelocity(2)
+                # while (tactile.timestamps[tactile.current_index] >= vision.timestamps[vision.current_index+1]):
+                #     _, frame = vision.getNextFrame()
+                #     if frame is None:
+                #         break
+            # else:  # Navigate video frames
+            #     vision.getNextFrame()
+            #     while tactile.timestamps[tactile.current_index] < vision.timestamps[vision.current_index]:
+            #         tactile.updateNextIndex()
+            return False
+
+        elif key == keyboard.Key.down:
+
+            rospy.loginfo("Velocity halved (0.5x)")
+
+            # Navigate tactile_frames
+            if not mode:
+                tactile.multiplyVelocity(0.5)
+                # while (tactile.timestamps[tactile.current_index] >= vision.timestamps[vision.current_index+1]):
+                #     _, frame = vision.getNextFrame()
+                #     if frame is None:
+                #         break
+            # else:  # Navigate video frames
+            #     vision.getNextFrame()
+            #     while tactile.timestamps[tactile.current_index] < vision.timestamps[vision.current_index]:
+            #         tactile.updateNextIndex()
+
             return False
 
     except AttributeError as ex:
@@ -582,31 +608,31 @@ if __name__ == '__main__':
     previous_label_data = checkPreviouslyStoredTactileData()
 
     # Load all relevant data files
-    vision = VideoRecordPublisher(config_dict['vision_data_path'])
+    # vision = VideoRecordPublisher(config_dict['vision_data_path'])
     manual_labels = ManualLabelsRecord(config_dict['manual_labels_path'])
     tactile = TactileRecordPublisher(
         config_dict['tactile_data_path'], manual_labels.getTimestampStartExperiment(), fine_tuned_shifted_elements)
-    exp_states = ExperimentStatesRecord(config_dict['states_file_path'])
+    # exp_states = ExperimentStatesRecord(config_dict['states_file_path'])
 
     # Ground manual label timestamps with initial timestamp data
     manual_labels.resetTimestamps(
         tactile.raw_timestamps[tactile.initial_tactile_index])
 
     # Ground experiment tasks timestamps with timestamp associated with end of "Move_1" task
-    exp_states.resetTimestamps()
+    # exp_states.resetTimestamps()
 
     # In general it should show frame where robot motion stops for the first time
-    vision.getVideoInitialFrame()
+    # vision.getVideoInitialFrame()
 
     # Print general information
     rospy.loginfo(
         '=================================================================================')
-    vision_rate = vision.fps
-    rospy.loginfo("Vison sample frequency is: {}Hz".format(vision_rate))
+    # vision_rate = vision.fps
+    # rospy.loginfo("Vison sample frequency is: {}Hz".format(vision_rate))
     rospy.loginfo("Tactile sample frequency is: {}Hz".format(tactile_rate))
 
-    rospy.loginfo('Begin video timestamp is: {}'.format(
-        vision.initial_motion_timestamp))
+    # rospy.loginfo('Begin video timestamp is: {}'.format(
+        # vision.initial_motion_timestamp))
     rospy.loginfo('Begin tactile timestamp is: {}'.format(
         tactile.raw_timestamps[tactile.current_index]))
 
@@ -615,17 +641,17 @@ if __name__ == '__main__':
 
     # Print current information
     while not rospy.is_shutdown():
-        vision.showFrame()
+        # vision.showFrame()
         tactile.publishData()
         rospy.loginfo(
             '=================================================================================')
-        rospy.loginfo('Current vision timestamp: {}'.format(
-            vision.timestamps[vision.current_index]))
+        # rospy.loginfo('Current vision timestamp: {}'.format(
+            # vision.timestamps[vision.current_index]))
         rospy.loginfo('Current tactile timestamp: {}'.format(
             tactile.timestamps[tactile.current_index]))
 
-        rospy.loginfo('Current robot state is: {}'.format(
-            exp_states.getCurrentTask(tactile.timestamps[tactile.current_index])))
+        # rospy.loginfo('Current robot state is: {}'.format(
+            # exp_states.getCurrentTask(tactile.timestamps[tactile.current_index])))
 
         try:
             rospy.loginfo('Tactile CHANGES labels: ( {}  {}  {}  {}  [ {} ]  {}  {}  {}  {})'.format(
@@ -642,12 +668,12 @@ if __name__ == '__main__':
         rospy.loginfo('Next tactile slips happening at:')
         rospy.loginfo(list(event for event in manual_labels.getTimestampsSlips()
                            if event > tactile.timestamps[tactile.current_index]))
-        rospy.loginfo('Last vision frame timestamp is: {}'.format(
-            vision.getTimestampEndExperiment()))
+        # rospy.loginfo('Last vision frame timestamp is: {}'.format(
+            # vision.getTimestampEndExperiment()))
         rospy.loginfo('Last tactile frame timestamp is: {}'.format(
             tactile.getTimestampEndExperiment()))
-        rospy.loginfo(
-            'Has last vision frame been updated?: {}'.format(has_last_vision_frame_been_updated))
+        # rospy.loginfo(
+            # 'Has last vision frame been updated?: {}'.format(has_last_vision_frame_been_updated))
         rospy.loginfo(
             'Has last tactile frame been updated?: {}'.format(has_last_tactile_frame_been_updated))
         rospy.loginfo('Has data been saved?: {}'.format(has_data_been_saved))
@@ -657,7 +683,7 @@ if __name__ == '__main__':
         wait_for_user_input()
         rate.sleep()
 
-    del vision
+    # del vision
     del manual_labels
     del tactile
-    del exp_states
+    # del exp_states
